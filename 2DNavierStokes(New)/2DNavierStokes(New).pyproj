@@ -21,7 +21,20 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="basis.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Collocation.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="mytools.py" />
+    <Compile Include="NavierStokesMatrix.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NumericalTools.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="VorticityStreamfunction.py" />
     <Compile Include="_2DNavierStokes_New_.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

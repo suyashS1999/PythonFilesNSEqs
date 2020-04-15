@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>64257bb2-1b0e-4ba1-bbab-21b50a69e74a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>_2DNavierStokes_New_.py</StartupFile>
+    <StartupFile>NavierStokes_Collocation.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -29,6 +29,9 @@
     </Compile>
     <Compile Include="mytools.py" />
     <Compile Include="NavierStokesMatrix.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NavierStokes_Collocation.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="NumericalTools.py">

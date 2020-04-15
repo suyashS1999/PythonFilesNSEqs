@@ -25,6 +25,7 @@ class NavierStokes():
 		self.b = zeros((self.N, tn));						# Weights for v	
 		self.a_error = zeros((self.N, tn));					# Weights for u_error
 		self.b_error = zeros((self.N, tn));					# Weights for v_error
+		self.p_error = zeros((self.N, tn));					# Weights for p_error
 		self.p = zeros((self.N, tn));						# Weights for p
 		self.p_error = zeros((self.N, tn));					# Weights for p_error
 		self.S_m = syp.MutableDenseNDimArray(zeros((1, self.N))[0]);			# Source Term for pressure
@@ -40,7 +41,8 @@ class NavierStokes():
 			self.dyphi.append(syp.diff(self.phi[i], y));
 			self.dyphi_p.append(syp.diff(self.phi_p[i], y));
 		print("Done");
-		self.d2P = syp.lambdify([self.a_sym, self.x, self.y], array(syp.diff(syp.diff(P, x), x)).dot(self.a_sym) + array(syp.diff(syp.diff(P, y), y)).dot(self.a_sym), "numpy");
+		self.vorticity = syp.lambdify([self.a_sym, self.b_sym, self.x, self.y], array(self.dyphi).dot(self.a_sym) - array(self.dxphi).dot(self.b_sym), 'numpy');
+		self.grad_v = syp.lambdify([self.a_sym, self.b_sym, self.x, self.y], array(self.dxphi).dot(self.a_sym) + array(self.dyphi).dot(self.b_sym), "numpy");
 
 	def test(self, x_mesh, y_mesh):
 		print("test");
@@ -180,9 +182,6 @@ class NavierStokes():
 	#	if t == 0:
 	#		return source;
 
-	def Pressure_Update(self, delta, t, dt, Lup, Lvp):
-		self.p[:, t + 1] = self.p[:, t] - dt/delta*(Lup.dot(self.a[:, t]) + Lvp.dot(self.b[:, t]));
-
 	def Error_test_Momentum(self, mu):
 		t_sym = syp.symbols("t_sym");
 		fakeSolnx = syp.exp(-t_sym)*self.phi[0];
@@ -199,6 +198,25 @@ class NavierStokes():
 			source_y[i] = integrate(SourceTermy*self.phi[i]*self.orthW, self.wx, self.x_int, self.wy, self.y_int);
 		return fx, fy, syp.lambdify([t_sym], source_x), syp.lambdify([t_sym], source_y);
 
+	def Error_test_Pressure(self):
+		t_sym = syp.symbols("t_sym");
+		fakeSoln = syp.exp(-t_sym)*self.phi_p[0];
+		fP = syp.lambdify([self.x, self.y, t_sym], fakeSoln, "numpy");
+		SourceTerm = syp.diff(fakeSoln, t_sym);
+		source = syp.MutableDenseNDimArray(zeros((1, self.N))[0]);
+		self.p_error[0, 0] = 1;
+		for i in range(self.N):
+			source[i] = integrate(SourceTerm*self.phi_p[i]*self.orthW, self.wx, self.x_int, self.wy, self.y_int);
+		return fP, syp.lambdify([t_sym], source, "numpy");
+
+	def Source(self):
+		t_sym = syp.symbols("t_sym");
+		a = 0.0001;
+		SourceTermx = (syp.exp(-t_sym**2/a**2) + syp.exp(-(t_sym - 0.3)**2/a**2) + syp.exp(-(t_sym - 0.6)**2/a**2))*(2*self.phi[0] + 6.7*self.phi[1] - 3.5*self.phi[2] + 1.4*self.phi[3]);
+		source_x = syp.MutableDenseNDimArray(zeros((1, self.N))[0]);
+		for i in range(self.N):
+			source_x[i] = integrate(SourceTermx*self.phi[i]*self.orthW, self.wx, self.x_int, self.wy, self.y_int);
+		return syp.lambdify([t_sym], source_x, "numpy");
 
 	#def SourceTerm(self, t):
 	#	u = self.UV(self.a[:, t], x_mesh, y_mesh);

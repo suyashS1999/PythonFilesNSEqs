@@ -24,11 +24,26 @@ def Quadrature_weights(N, a, b):
 	w = A_i.dot(B);
 	return w.T[0], x;
 
+def Quadrature_weightTransform(nodes, weights, a, b):
+	""" Function to transform Quadrature weights and nodes from one domain [c, d] to another [a, b]
+		while maintaining Degree of Percision
+	Input Arguments:
+		nodes = array with nodes in [c, d] (numpy array)
+		weights = array with weights calculated for nodes in [c, d] (numpy array)
+		[a, b] = new interval (float, float)
+	Output:
+		x_int = new Quadrature nodes (numpy array)
+		w = new Quadrature weights (numpy array)
+	"""
+	x_int = (b - a)/2*(nodes + 1) + a;
+	w = (b - a)/2*weights;
+	return w, x_int;
+
 def integrate(f, wx, x, wy, y):
 	if len(f.free_symbols) <= 2:
 		xi, yi = f.free_symbols;
 		X, Y = meshgrid(x, y);
-		F = syp.lambdify([xi, yi], f, 'numpy');
+		F = syp.lambdify([xi, yi], f, "numpy");
 		I = F(X, Y).dot(wx).dot(wy);
 	else:
 		xi, yi = syp.symbols("xi yi");
@@ -41,6 +56,12 @@ def integrate(f, wx, x, wy, y):
 	
 	#print("numerical integral   :", syp.N(I, n = 10, chop = True));
 	#print("syp integral         :", syp.integrate(f, (xi, x0, x1), (yi, y0, y1)));
+	return I;
+
+def integrate1D(f, wx, x):
+	xi = f.free_symbols;
+	F = syp.lambdify(xi, f, "numpy");
+	I = F(x).dot(wx);
 	return I;
 
 def RK4(dt, UpdateFunc, Func_args, Constant_M, Sx, Sy, a, b, Pu, Pv):
@@ -68,3 +89,28 @@ def RK4(dt, UpdateFunc, Func_args, Constant_M, Sx, Sy, a, b, Pu, Pv):
 	bigMatrix[N: 2*N, N: 2*N] = Bv; bigMatrix[0: N, 2*N: 3*N] = Pu; bigMatrix[N: 2*N, 2*N: 3*N] = Pv;
 	Ma = array([sum(x) for x in (w*Ka)]); Mb = array([sum(x) for x in (w*Kb)]);
 	return a + Ma, b + Mb, bigMatrix;
+
+def EulerExplicit(A, dt, x0, t_max):
+	no_t_steps = int(t_max/dt);
+	try:
+		X = zeros((len(x0), no_t_steps));
+		X[:, 0] = x0;
+	except:
+		X = zeros((1, no_t_steps));
+		X[0] = x0;
+	for t in range(no_t_steps - 1):
+		X[:, t + 1] = X[:, t] + dt*A.dot(X[:, t]);
+	return X;
+
+def EulerImplicit(A, dt, x0, t_max):
+	no_t_steps = int(t_max/dt);
+	try:
+		X = zeros((len(x0), no_t_steps));
+		X[:, 0] = x0;
+	except:
+		X = zeros((1, no_t_steps));
+		X[0] = x0;
+	M = inv(eye(len(A)) - dt*A);
+	for t in range(no_t_steps - 1):
+		X[:, t + 1] = M.dot(X[:, t]);
+	return X;

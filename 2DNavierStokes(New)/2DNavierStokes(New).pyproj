@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>64257bb2-1b0e-4ba1-bbab-21b50a69e74a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>NavierStokes_Collocation.py</StartupFile>
+    <StartupFile>LinAdvFEM.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -25,6 +25,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Collocation.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="LinAdvFEM.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="mytools.py" />

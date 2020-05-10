@@ -65,10 +65,11 @@ def ConstructFunction(phi, element_nodes, xi, a, fig):
 	even_idx = arange(0, shape(soln)[0], 2);	odd_idx = arange(1, shape(soln)[0], 2);
 	soln = soln[even_idx, :] + soln[odd_idx, :];
 	plt.figure(fig.number);
-	plt.clf();
+	plt.axes();
+	plt.cla();
 	plt.plot(element_nodes[::2].reshape(1, -1)[0], soln.reshape(1, -1)[0]);
 	plt.grid(True);
-	plt.ylim([-0.1, 5.0]);
+	#plt.ylim([-0.1, 5.0]);
 	return soln;
 
 def plot_stability_region(stabfn, A, dt):
@@ -89,6 +90,20 @@ def plot_stability_region(stabfn, A, dt):
 	plt.scatter(Re, Im, color = 'yellow', marker = 'x');
 	return 0;
 
+def TuneInitialCondition(phi, N, a, element_nodes, xi, fig):
+	for i in range(N + 1):
+		globals()["sld%s" % i] = plt.axes([0., 0.05*(i + 1), 0.1, 0.03]);
+		globals()["slider%s" % i] = Slider(globals()["sld%s" % i], 'i', -10.0, 10.0, valinit = 0);
+
+	def update(val): 
+		global a;
+		for i in range(N + 1):
+			a[i] = globals()["slider%s" % i].val;
+		ConstructFunction(phi, element_nodes, xi, a, fig);
+	for i in range(N + 1):
+		globals()["slider%s" % i].on_changed(update);
+
+
 
 
 #%% Input data
@@ -97,8 +112,8 @@ x0 = 0;		x1 = 10;								# Domain dimentions
 c = 5;												# Advection speed
 t_max = 10;											# Maximum time
 dt = 0.01;											# Time step
-N = 50;												# Number of elements = N, number of basis functions = N + 1
-DOP = 3;											# Degree of precision for integration
+N = 20;												# Number of elements = N, number of basis functions = N + 1
+DOP = 4;											# Degree of precision for integration
 w_int_std, x_int_std = Quadrature_weights(DOP, -1, 1);
 x_mesh, element_nodes, phi = GenMesh1D(x0, x1, N, xi);	# Generate mesh
 
@@ -106,8 +121,13 @@ mass_M, stiff_M = FiniteElementMatrix(phi, c, N, element_nodes, x_int_std, w_int
 A = inv(mass_M).dot(-stiff_M);
 
 
+#a = zeros((1, N + 1))[0];
+#a[0: 4] = array([0, 2, 5, 3]);
 a = zeros((1, N + 1))[0];
-a[0: 4] = array([0, 2, 5, 3]);
+fig = plt.figure(figsize = (9, 8));
+_ = ConstructFunction(phi, element_nodes, xi, a, fig);
+TuneInitialCondition(phi, N, a, element_nodes, xi, fig);
+plt.show();
 s = lambda z: 1/(1 - z);
 plot_stability_region(s, A, dt);
 A[0, :] = 0;

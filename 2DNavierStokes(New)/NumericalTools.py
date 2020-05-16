@@ -1,6 +1,9 @@
 from numpy import*
 import sympy as syp
 from numpy.linalg import inv, solve, eigvals, det, norm
+from mytools import pbf
+from matplotlib import pyplot as plt
+
 def Cosine_Sampler(a, b, n):
 	ksi = zeros((1, n));
 	for i in range(1, n + 1):
@@ -61,7 +64,10 @@ def integrate(f, wx, x, wy, y):
 def integrate1D(f, wx, x):
 	xi = f.free_symbols;
 	F = syp.lambdify(xi, f, "numpy");
-	I = F(x).dot(wx);
+	try:
+		I = F(x).dot(wx);
+	except:
+		I = f*ones_like(x).dot(wx);
 	return I;
 
 def RK4(dt, UpdateFunc, Func_args, Constant_M, Sx, Sy, a, b, Pu, Pv):
@@ -90,6 +96,39 @@ def RK4(dt, UpdateFunc, Func_args, Constant_M, Sx, Sy, a, b, Pu, Pv):
 	Ma = array([sum(x) for x in (w*Ka)]); Mb = array([sum(x) for x in (w*Kb)]);
 	return a + Ma, b + Mb, bigMatrix;
 
+def RK41D(dt, inv_mass_M, UpdateFunc, Func_args, Constant_M, Sx, a):
+	N = len(a);
+	w = array([1/6, 1/3, 1/3, 1/6]);
+	Ka = zeros((len(a), 4));
+	a0 = a;
+	for i in range(4):
+		stiff_M = UpdateFunc(a0, *Func_args) - Constant_M;
+		A = inv_mass_M.dot(-stiff_M); A_ = A;
+		P_BC = A[0, :];
+		A[0, :] = A[-1, :];
+		A[-1, :] = P_BC;
+		Ka[:, i] = dt*(A.dot(a0) + Sx);
+		if i != 3:
+			if i < 2:
+				j = 2;
+			else:
+				j = 1;
+			a0 = a + Ka[:, i]/j;
+	Ma = array([sum(x) for x in (w*Ka)]);
+	return a + dt*A.dot(a), A_;
+
+def RK4_call(RK4_args, dt, x0, t_max, fig):
+	no_t_steps = int(t_max/dt);
+	X = zeros((len(x0), no_t_steps));
+	X[:, 0] = x0;
+	s = lambda z: (1 + z + z**2/2 + z**3/6 + z**4/24);
+	for t in range(no_t_steps - 1):
+		pbf(t, no_t_steps - 2, "Time Marching");
+		X[:, t + 1], A = RK41D(*RK4_args, X[:, t]);
+		if t == 0 or t == no_t_steps - 2:
+			plot_stability_region(s, A, dt, fig)
+	return X;
+
 def EulerExplicit(A, dt, x0, t_max):
 	no_t_steps = int(t_max/dt);
 	try:
@@ -114,3 +153,21 @@ def EulerImplicit(A, dt, x0, t_max):
 	for t in range(no_t_steps - 1):
 		X[:, t + 1] = M.dot(X[:, t]);
 	return X;
+
+def plot_stability_region(stabfn, A, dt, fig):
+	x = linspace(-4, 4, 100);
+	X = meshgrid(x, x);
+	z = X[0] + 1j*X[1];
+	Rlevel = abs(stabfn(z));
+	plt.figure(fig.number);
+	plt.contourf(x, x, Rlevel, [1, 1000]);
+	plt.contour(x, x, Rlevel, [1, 1000]);
+	plt.xlabel(r'Re'); plt.ylabel(r'Im');
+	plt.plot([0, 0], [-4, 4], '-k');
+	plt.plot([-4, 4], [0, 0], '-k');
+	#plt.axes().set_aspect('equal');
+	evals = eigvals(A*dt);
+	Re = [i.real for i in evals];
+	Im = [i.imag for i in evals];
+	plt.scatter(Re, Im, color = 'yellow', marker = 'x');
+	return 0;

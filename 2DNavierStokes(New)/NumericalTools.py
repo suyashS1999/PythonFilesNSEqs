@@ -19,7 +19,8 @@ def GenMatrix(N, x):
 	return inv(A);
 
 def Quadrature_weights(N, a, b):
-	x = Cosine_Sampler(a, b, N);
+	#x = Cosine_Sampler(a, b, N);
+	x = linspace(a, b, N);
 	A_i = GenMatrix(N, x);
 	B = zeros((N, 1));
 	for i in range(1, N + 1):
@@ -43,11 +44,17 @@ def Quadrature_weightTransform(nodes, weights, a, b):
 	return w, x_int;
 
 def integrate(f, wx, x, wy, y):
-	if len(f.free_symbols) <= 2:
+	if isinstance(f, float):
+		I = f*sum(wx)*sum(wy);
+	elif len(f.free_symbols) == 2:
 		xi, yi = f.free_symbols;
 		X, Y = meshgrid(x, y);
 		F = syp.lambdify([xi, yi], f, "numpy");
 		I = F(X, Y).dot(wx).dot(wy);
+	elif len(f.free_symbols) == 1:
+		xi = f.free_symbols;
+		F = syp.lambdify(xi, f, "numpy");
+		I = F(x).dot(wx);
 	else:
 		xi, yi = syp.symbols("xi yi");
 		Ix = 0;
@@ -138,6 +145,7 @@ def EulerExplicit(A, dt, x0, t_max):
 		X = zeros((1, no_t_steps));
 		X[0] = x0;
 	for t in range(no_t_steps - 1):
+		pbf(t, no_t_steps - 2, "Time Marching");
 		X[:, t + 1] = X[:, t] + dt*A.dot(X[:, t]);
 	return X;
 
@@ -151,6 +159,7 @@ def EulerImplicit(A, dt, x0, t_max):
 		X[0] = x0;
 	M = inv(eye(len(A)) - dt*A);
 	for t in range(no_t_steps - 1):
+		pbf(t, no_t_steps - 2, "Time Marching");
 		X[:, t + 1] = M.dot(X[:, t]);
 	return X;
 

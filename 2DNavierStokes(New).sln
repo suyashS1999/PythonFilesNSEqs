@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28307.779
+VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "2DNavierStokes(New)", "2DNavierStokes(New)\2DNavierStokes(New).pyproj", "{64257BB2-1B0E-4BA1-BBAB-21B50A69E74A}"
 EndProject
@@ -18,6 +18,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {7A39AAC0-DA28-4FB2-8FFF-C1873C9BB5EE}
+		SolutionGuid = {462A11D2-51A1-4ECB-86AA-5DB6F868EE48}
 	EndGlobalSection
 EndGlobal

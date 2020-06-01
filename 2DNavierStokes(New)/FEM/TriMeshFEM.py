@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import inv, det
 from NumericalTools import integrate
 import sympy as syp
+import time
 
 class TriMesh():
 	def __init__(self, x1, x2, y1, y2):
@@ -14,8 +15,8 @@ class TriMesh():
 		self.dlx = 1.5;											# Delamination x position
 		self.dly = 0.5;											# Delamination x position
 		self.dlr = 0.4;											# Delamination radius
-		self.bnx = 10;											# Background elements in x
-		self.bny = 10;											# Background elements in y
+		self.bnx = 5;											# Background elements in x
+		self.bny = 5;											# Background elements in y
 		self.dx = (self.x2 - self.x1)/float(self.bnx - 1);		# Mesh spacing in x
 		self.dy = (self.y2 - self.y1)/float(self.bny - 1);		# Mesh spacing in y
 		self.minTriArea = (self.dx + self.dy)/10000.;			# Minimum triangle size
@@ -76,8 +77,8 @@ class TriMesh():
 		nb = zeros(self.bny + 1);
 		xb[:] = linspace(self.x1, self.x2, self.bnx + 1);
 		#yb[:] = linspace(self.y1, self.y2, self.bnx+1)
-		nb[:] = linspace(0., 1., self.bny + 1)
-		yb[:] = self.y2;
+		nb[:] = linspace(0., self.y2, self.bny + 1)
+		yb[:] = 1;
 		#yref = 0.1*sin(1.5*pi*2/(self.x2 - self.x1));
 		#for i in range(self.bnx + 1): 
 		#	if (xb[i] < 2):
@@ -118,6 +119,16 @@ class TriMesh():
 		self.nElem = len(self.elements);
 		self.elemArray = asarray(self.elements);
 
+	def ApplyBoundaryConditions(self, A):
+		A[self.leftVI, :] = A[self.rightVI, :];
+		A[self.lowerVI, :] = A[self.upperVI, :];
+	
+	def ApplyDirBoundaryConditions(self, A):
+		A[self.leftVI, :] = 0;
+		A[self.rightVI, :] = 0;
+		A[self.lowerVI, :] = 0;
+		A[self.upperVI, :] = 0;
+
 	#=========================================================
 	# Plots the mesh
 	#=========================================================
@@ -155,6 +166,7 @@ class MeshElementFEM():
 		self.v1 = mesh.vertices[self.vertices_idx[0]];
 		self.v2 = mesh.vertices[self.vertices_idx[1]];
 		self.v3 = mesh.vertices[self.vertices_idx[2]];
+		self.idx_i, self.idx_j = meshgrid(self.vertices_idx, self.vertices_idx);
 
 		x1 = self.v1[0];		y1 = self.v1[1];
 		x2 = self.v2[0];		y2 = self.v2[1];
@@ -168,6 +180,7 @@ class MeshElementFEM():
 		self.phi3_c = x1*y2 - x2*y1;		self.phi3_x = y1 - y2;			self.phi3_y = x2 - x1;
 		
 		self.Jacobian = None;
+		self.Jacobian_inv = None;
 		self.Jacobian_c = None;
 
 	def Transform_to_stdtri(self):
@@ -176,16 +189,17 @@ class MeshElementFEM():
 		A = array([[self.v_array[1][0] - Ori[0], self.v_array[2][0] - Ori[0]],
 				   [self.v_array[1][1] - Ori[1], self.v_array[2][1] - Ori[1]]]);
 		self.Jacobian = A;
+		#self.Jacobian_inv = inv(A);
 		self.Jacobian_c = Ori;
-		A_inv = inv(A);
+		#A_inv = inv(A);
 
-		local_coord = zeros_like(self.v_array);
-		row = 0;
-		for coord in self.v_array:
-			if where(self.v_array == coord) != origin_idx:
-				local_coord[row] = A_inv.dot(coord - Ori);
-				row += 1;
-		return local_coord;
+		#local_coord = zeros_like(self.v_array);
+		#row = 0;
+		#for coord in self.v_array:
+		#	if where(self.v_array == coord) != origin_idx:
+		#		local_coord[row] = A_inv.dot(coord - Ori);
+		#		row += 1;
+		#return local_coord;
 
 
 	def ShapeFunctions(self, x, y):
@@ -210,6 +224,19 @@ class MeshElementFEM():
 		for i in range(nVert):
 			for j in range(nVert):
 				gloMat[self.vertices_idx[i], self.vertices_idx[j]] += elemMat[i, j];
+		#gloMat[self.idx_i, self.idx_j] += elemMat;
+
+	#def Assemble_FEM_non_linMatrix(self, elemMat, gloMat):
+	#	# Retrieve the element vertex indices
+	#	nVert = self.vertices_idx.shape[0];
+
+	#	# Add element matrix to the global matrix
+	#	# In this case nVar = 1 is assumed
+	#	for i in range(nVert):
+	#		for j in range(nVert):
+	#			if gloMat[self.vertices_idx[i], self.vertices_idx[j]] != 0: 
+	#			gloMat[self.vertices_idx[i], self.vertices_idx[j]] += elemMat[i, j];
+	#	#gloMat[self.idx_i, self.idx_j] += elemMat;
 
 	def Assemble_FEM_Vector(self, elemVect, gloVect):
 		# Retrieve the element vertex indices
@@ -223,13 +250,6 @@ class MeshElementFEM():
 	def ApplyInitialCondition(self, f):
 		a = f(self.mesh.vertices[:, 0], self.mesh.vertices[:, 1]);
 		return a;
-
-	def ApplyBoundaryConditions(self, A):
-		for i in range(len(self.mesh.leftVI)):
-			A[self.mesh.leftVI[i], :] = A[self.mesh.rightVI[i], :];
-		for i in range(len(self.mesh.lowerVI)):
-			A[self.mesh.lowerVI[i], :] = A[self.mesh.upperVI[i], :];
-		return A;
 
 
 #mesh = TriMesh();

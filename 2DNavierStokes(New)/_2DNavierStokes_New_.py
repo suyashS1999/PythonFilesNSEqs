@@ -52,8 +52,8 @@ delta = 0.5;
 xi, yi = syp.symbols("xi yi");					# Symbolic variables
 N = 3;											# Number of basis functions = N^2
 nodes = N + 4;									# Quadrature DOP
-wx, x_int = Quadrature_weights(nodes, x0, x1);	# Quadrature weights
-wy, y_int = Quadrature_weights(nodes, y0, y1);
+wx, x_int = Quadrature_weights(nodes, x0, x1, "cos");	# Quadrature weights
+wy, y_int = Quadrature_weights(nodes, y0, y1, "cos");
  
 BF = BasisFunctions(N, x0, x1, y0, x1, xi, yi);		# Generate Basis Functions
 basis_funcs_p, basis_funcs = BF.Chebyshev();

@@ -136,7 +136,7 @@ t_max = 20;											# Maximum time
 dt = 0.01;											# Time step
 N = 30;												# Number of elements = N, number of basis functions = N + 1
 DOP = 4;											# Degree of precision for integration
-w_int_std, x_int_std = Quadrature_weights(DOP, -1, 1);
+w_int_std, x_int_std = Quadrature_weights(DOP, -1, 1, "cos");
 x_mesh, element_nodes, phi = GenMesh1D(x0, x1, N, xi);	# Generate mesh
 
 #%% Linear Advection

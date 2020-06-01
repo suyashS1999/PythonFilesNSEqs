@@ -27,6 +27,9 @@
     <Compile Include="Collocation.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="module1.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="mytools.py" />
     <Compile Include="NavierStokesMatrix.py">
       <SubType>Code</SubType>

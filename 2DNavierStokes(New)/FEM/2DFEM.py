@@ -13,9 +13,9 @@ import time
 x1 = 0.;		x2 = 4.;												# Domain dimentions
 y1 = 0.;		y2 = 4.;
 c = 5;																	# Advection Speed
-mu = 0.5;																# Viscosity
+mu = 0.8;																# Viscosity
 t_max = 1;																# Maximum time
-dt = 0.01;																# Time step
+dt = 0.001;																# Time step
 DOP = 4;																# Degree of precision for integration
 w_int_stdtri, x_int_stdtri = Quadrature_weights(DOP, 0, 1, "lin");		# Quadrature weights and nodes for intgration
 w_fact = 0.5;															# Area ratio between square and triangle
@@ -24,7 +24,7 @@ x_int_mesh, y_int_mesh = meshgrid(x_int_stdtri, x_int_stdtri);
 quadrature_parm = (w_int_stdtri, x_int_stdtri, w_int_stdtri, x_int_stdtri);
 
 mesh = TriMesh(x1, x2, y1, y2);
-mesh.loadMesh(6, 0, 0, 0);
+mesh.loadMesh(4, 0, 0, 0);
 mesh.plotMesh();
 
 #%% Functions
@@ -78,6 +78,7 @@ def LinearAdvectionFEM_Matrix(mesh, c, mu):
 	mesh.ApplyBoundaryConditions(A);
 	print("Done");
 	return IC, mass_M, stiff_M, A, S.reshape(1, len(S))[0];
+
 
 def BurgersEquationFEM_Matrix(mesh, mu):
 	mass_M = zeros((mesh.nVert, mesh.nVert));
@@ -208,53 +209,53 @@ def BurgersEquationFEM_Matrix(mesh, mu):
 
 
 #%% Generate Matrix Lin Adv
-a, mass_M, stiff_M, A, S  = LinearAdvectionFEM_Matrix(mesh, c, mu);
+#a, mass_M, stiff_M, A, S  = LinearAdvectionFEM_Matrix(mesh, c, mu);
 
-#mesh.plotSoln(a, None, title = "Initial Condition");
-#plt.figure();
-#plt.imshow(mass_M);
-#plt.colorbar();
+##mesh.plotSoln(a, None, title = "Initial Condition");
+##plt.figure();
+##plt.imshow(mass_M);
+##plt.colorbar();
 
-#plt.figure();
-#plt.imshow(stiff_M);
-#plt.colorbar();
-S_t = lambda t: S*exp(-t);
-Manifactured_Soln = lambda t: Verif_f(mesh.vertices[:, 0], mesh.vertices[:, 1])*exp(-t);
-s = lambda z: 1/(1 - z);
-stab_fig = plt.figure(figsize = (8, 8));
-plot_stability_region(s, A, dt, stab_fig);
-X = EulerImplicit(A, dt, a, t_max, 0, 0);
-X_verif = EulerImplicit(A, dt, Manifactured_Soln(0), t_max, S_t, Manifactured_Soln);
-plt.show();
+##plt.figure();
+##plt.imshow(stiff_M);
+##plt.colorbar();
+#S_t = lambda t: S*exp(-t);
+#Manifactured_Soln = lambda t: Verif_f(mesh.vertices[:, 0], mesh.vertices[:, 1])*exp(-t);
+#s = lambda z: 1/(1 - z);
+#stab_fig = plt.figure(figsize = (8, 8));
+#plot_stability_region(s, A, dt, stab_fig);
+#X = EulerImplicit(A, dt, a, t_max, 0, 0);
+#X_verif = EulerImplicit(A, dt, Manifactured_Soln(0), t_max, S_t, Manifactured_Soln);
+#plt.show();
 
-#%% Solution Plots
-fig = plt.figure(figsize = (18, 8));
-mesh.plotSoln(a, fig, "Solution");
-k = 1;
-def updatefig(i):
-	global k;
-	mesh.plotSoln(X[:, k], fig, "Solution");
-	k += 1;
-	if k == shape(X)[1]:
-		k = 0;
-	return 0;
-anim = animation.FuncAnimation(fig, updatefig, interval = 1, blit = False);
-plt.show();
+##%% Solution Plots
+#fig = plt.figure(figsize = (18, 8));
+#mesh.plotSoln(a, fig, "Solution");
+#k = 1;
+#def updatefig(i):
+#	global k;
+#	mesh.plotSoln(X[:, k], fig, "Solution");
+#	k += 1;
+#	if k == shape(X)[1]:
+#		k = 0;
+#	return 0;
+#anim = animation.FuncAnimation(fig, updatefig, interval = 1, blit = False);
+#plt.show();
 
-#%% Solution Verification Plots
-fig = plt.figure(figsize = (18, 8));
-mesh.plotSoln(Manifactured_Soln(0), fig, "Solution");
-k = 1;
-def updatefig(i):
-	global k;
-	mesh.plotSoln(X_verif[:, k], fig, "Solution");
-	#mesh.plotSoln(Manifactured_Soln(k*dt), fig, "Solution");
-	k += 1;
-	if k == shape(X)[1]:
-		k = 0;
-	return 0;
-anim = animation.FuncAnimation(fig, updatefig, interval = 1, blit = False);
-plt.show();
+##%% Solution Verification Plots
+#fig = plt.figure(figsize = (18, 8));
+#mesh.plotSoln(Manifactured_Soln(0), fig, "Solution");
+#k = 1;
+#def updatefig(i):
+#	global k;
+#	mesh.plotSoln(X_verif[:, k], fig, "Solution");
+#	#mesh.plotSoln(Manifactured_Soln(k*dt), fig, "Solution");
+#	k += 1;
+#	if k == shape(X)[1]:
+#		k = 0;
+#	return 0;
+#anim = animation.FuncAnimation(fig, updatefig, interval = 1, blit = False);
+#plt.show();
 
 #%% Generate Matrix Burgers Equation
 #a, b, mass_M_inv, _, _, _, diffusion_M, convection_u_M_func, convection_v_M_func = BurgersEquationFEM_Matrix(mesh, mu);

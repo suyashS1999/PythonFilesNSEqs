@@ -4,7 +4,7 @@ from numpy.linalg import inv, solve, eigvals, det, norm
 from mytools import pbf
 from matplotlib import pyplot as plt
 import time
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix as sparse
 
 def Cosine_Sampler(a, b, n):
 	ksi = zeros((1, n));
@@ -81,7 +81,6 @@ def RK4(dt, UpdateFunc, Func_args, Constant_M, Sx, Sy, a, b, Pu, Pv):
 	
 	for i in range(4):
 		A_non, B_non, C_non, D_non = UpdateFunc(a0, b0, *Func_args);
-		#A_non, B_non, C_non, D_non = UpdateFunc(a0, b0);
 		Au = -A_non + Constant_M;
 		Bu = -B_non;
 		Av = -C_non;
@@ -179,8 +178,8 @@ def EulerExplicit2D_nonLin(Update_func, Func_args, Constant_M, dt, x0, y0, t_max
 		X[:, t + 1] = X[:, t] + dt*(Au.dot(X[:, t]) + Bu.dot(Y[:, t]));
 		Y[:, t + 1] = Y[:, t] + dt*(Av.dot(X[:, t]) + Bv.dot(Y[:, t]));
 		if t == 0 or t == no_t_steps - 2:
-			A = vstack((concatenate((Au, Bu), axis = 1), concatenate((Av, Bv), axis = 1)));
-			plot_stability_region(s, A, dt, fig)
+			A = vstack((concatenate((sparse.todense(Au), sparse.todense(Bu)), axis = 1), concatenate((sparse.todense(Av), sparse.todense(Bv)), axis = 1)));
+			plot_stability_region(s, A, dt, fig);
 	return X, Y;
 
 def EulerImplicit(A, dt, x0, t_max, S_t, Manifactured_Soln):
@@ -191,7 +190,7 @@ def EulerImplicit(A, dt, x0, t_max, S_t, Manifactured_Soln):
 	except:
 		X = zeros((1, no_t_steps));
 		X[0] = x0;
-	M = inv(eye(len(A)) - dt*A);
+	M = inv(eye(shape(A)[0]) - dt*A);
 	if S_t == 0:
 		for t in range(no_t_steps - 1):
 			pbf(t, no_t_steps - 2, "Time Marching");

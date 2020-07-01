@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>64257bb2-1b0e-4ba1-bbab-21b50a69e74a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>FEM\2DFEM.py</StartupFile>
+    <StartupFile>FEM\FEM2D.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,10 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FEM\2DFEM.py">
+    <Compile Include="FEM\Burgers.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FEM\FEM2D.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="basis.py">
@@ -34,6 +37,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FEM\FEM_meshGen.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="FEM\LinAdv.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="mytools.py" />

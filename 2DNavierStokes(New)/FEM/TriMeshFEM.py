@@ -119,15 +119,16 @@ class TriMesh():
 		self.nElem = len(self.elements);
 		self.elemArray = asarray(self.elements);
 
-	def ApplyBoundaryConditions(self, A):
-		A[self.leftVI, :] = A[self.rightVI, :];
-		A[self.lowerVI, :] = A[self.upperVI, :];
+	def ApplyBoundaryConditions(self, A, BC):
+		if BC == "Periodic":
+			A[self.leftVI, :] = A[self.rightVI, :];
+			A[self.lowerVI, :] = A[self.upperVI, :];
 	
-	def ApplyDirBoundaryConditions(self, A):
-		A[self.leftVI, :] = 0;
-		A[self.rightVI, :] = 0;
-		A[self.lowerVI, :] = 0;
-		A[self.upperVI, :] = 0;
+		elif BC == "Dir":
+			A[self.leftVI, :] = 0;
+			A[self.rightVI, :] = 0;
+			A[self.lowerVI, :] = 0;
+			A[self.upperVI, :] = 0;
 
 	#=========================================================
 	# Plots the mesh
@@ -216,45 +217,18 @@ class MeshElementFEM():
 		return phi, dphi;
 
 	def Assemble_FEM_Matrix(self, elemMat, gloMat):
-		# Retrieve the element vertex indices
-		nVert = self.vertices_idx.shape[0];
-
-		# Add element matrix to the global matrix
-		# In this case nVar = 1 is assumed
-		for i in range(nVert):
-			for j in range(nVert):
-				gloMat[self.vertices_idx[i], self.vertices_idx[j]] += elemMat[i, j];
-		#gloMat[self.idx_i, self.idx_j] += elemMat;
-
-	#def Assemble_FEM_non_linMatrix(self, elemMat, gloMat):
-	#	# Retrieve the element vertex indices
-	#	nVert = self.vertices_idx.shape[0];
-
-	#	# Add element matrix to the global matrix
-	#	# In this case nVar = 1 is assumed
-	#	for i in range(nVert):
-	#		for j in range(nVert):
-	#			if gloMat[self.vertices_idx[i], self.vertices_idx[j]] != 0: 
-	#			gloMat[self.vertices_idx[i], self.vertices_idx[j]] += elemMat[i, j];
-	#	#gloMat[self.idx_i, self.idx_j] += elemMat;
+		idx = array([[self.vertices_idx[0], self.vertices_idx[0], self.vertices_idx[0], 
+					  self.vertices_idx[1], self.vertices_idx[1], self.vertices_idx[1], 
+					  self.vertices_idx[2], self.vertices_idx[2], self.vertices_idx[2]], 
+					 [self.vertices_idx[0], self.vertices_idx[1], self.vertices_idx[2], 
+					  self.vertices_idx[0], self.vertices_idx[1], self.vertices_idx[2],
+					  self.vertices_idx[0], self.vertices_idx[1], self.vertices_idx[2]]]);
+		gloMat[idx[0], idx[1]] += elemMat.reshape(1, len(elemMat)**2)[0];
 
 	def Assemble_FEM_Vector(self, elemVect, gloVect):
-		# Retrieve the element vertex indices
-		nVert = self.vertices_idx.shape[0];
-
-		# Add element matrix to the global matrix
-		# In this case nVar = 1 is assumed
-		for i in range(nVert):
-			gloVect[self.vertices_idx[i]] += elemVect[i];
+		idx = array([self.vertices_idx[0], self.vertices_idx[1], self.vertices_idx[2]]);
+		gloVect[idx] += elemVect;
 
 	def ApplyInitialCondition(self, f):
 		a = f(self.mesh.vertices[:, 0], self.mesh.vertices[:, 1]);
 		return a;
-
-
-#mesh = TriMesh();
-#mesh.loadMesh(10, 0, 0, 0);
-##mesh.plotMesh();
-#a = random.rand(mesh.nVert);
-#mesh.plotSoln(a, "test");
-#elements = MeshElementFEM(mesh, 1, 0);

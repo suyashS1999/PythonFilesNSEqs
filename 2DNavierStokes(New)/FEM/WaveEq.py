@@ -6,17 +6,18 @@ from NumericalTools import*
 from TriMeshFEM import TriMesh, MeshElementFEM
 from mytools import pbf
 import time
-from FEM2D import BurgersEquationFEM_Matrix, NonLinearStiff_Matrix
+from FEM2D import WaveEquation
+from scipy.sparse import csr_matrix as sparse
 
 #%% Functions
-def InitialCondition(x, y): return 40*exp(-100*((x - 0.8)**2 + (y - 0.8)**2));
+def InitialCondition(x, y): return 40*exp(-100*((x - 2)**2 + (y - 2)**2));
 
 #%% Input data
-x1 = 0.;		x2 = 2.;												# Domain dimentions
-y1 = 0.;		y2 = 2.;
-mu = 0.6;																# Viscosity
-t_max = 0.05;															# Maximum time
-dt = 0.001;																# Time step
+x1 = 0.;		x2 = 10.;												# Domain dimentions
+y1 = 0.;		y2 = 4.;
+c = 5;																	# Wave Speed
+t_max = 10;																# Maximum time
+dt = 0.01;																# Time step
 DOP = 4;																# Degree of precision for integration
 w_int_stdtri, x_int_stdtri = Quadrature_weights(DOP, 0, 1, "lin");		# Quadrature weights and nodes for intgration
 w_fact = 0.5;															# Area ratio between square and triangle
@@ -25,28 +26,34 @@ x_int_mesh, y_int_mesh = meshgrid(x_int_stdtri, x_int_stdtri);
 quadrature_parm = (w_int_stdtri, x_int_stdtri, w_int_stdtri, x_int_stdtri);
 
 mesh = TriMesh(x1, x2, y1, y2);
-mesh.loadMesh(6, 0, 0, 0);
+mesh.loadMesh(8, 0, 0, 0);
 mesh.plotMesh();
-BC = "Periodic";
 
+#%%
+v0, w0, _, _, A_, _ = WaveEquation(mesh, c**2, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, InitialCondition, "Periodic", 0);
+zero = zeros_like(A_);
+one = identity(shape(A_)[0]);
+A = vstack((concatenate((zero, A_), axis = 1), concatenate((one, zero), axis = 1)));
+a = concatenate((w0, v0));
 
-
-#%% Generate Matrix Burgers Equation
-a, b, mass_M_inv, _, diffusion_M = BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, BC);
+s = lambda z: 1/(1 - z);
 stab_fig = plt.figure(figsize = (8, 8));
-X, Y = EulerExplicit2D_nonLin(NonLinearStiff_Matrix, (mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_stdtri, BC), diffusion_M, dt, a, b, t_max, stab_fig);
+plot_stability_region(s, A_, dt, stab_fig);
+X = EulerImplicit(A, dt, a, t_max, 0, 0);
 plt.show();
 
 #%% Solution Plots
 fig = plt.figure(figsize = (18, 8));
-mesh.plotSoln(sqrt(a**2 + b**2), fig, "Solution");
+mesh.plotSoln(v0, fig, "Solution");
 k = 1;
 def updatefig(i):
 	global k;
-	mesh.plotSoln(sqrt(X[:, k]**2 + Y[:, k]**2), fig, "Solution");
+	mesh.plotSoln(X[int(shape(X)[0]/2):, k], fig, "Solution");
 	k += 1;
 	if k == shape(X)[1]:
 		k = 0;
 	return 0;
 anim = animation.FuncAnimation(fig, updatefig, interval = 1, blit = False);
 plt.show();
+
+

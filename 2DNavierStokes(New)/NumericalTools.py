@@ -225,6 +225,26 @@ def plot_stability_region(stabfn, A, dt, fig):
 	plt.scatter(Re, Im, color = 'yellow', marker = 'x');
 	return 0;
 
+def Gauss_Seidel(A, b, ITERATION_LIMIT):
+	x0 = random.rand(len(b));
+	tol = norm(A.dot(x0) - b);
+	x = x0;
+	for it_count in range(1, ITERATION_LIMIT):
+		x_new = zeros_like(x);
+		print("Iteration {0}: {1}".format(it_count, x));
+		for i in range(A.shape[0]):
+			s1 = A[i, :i].dot(x_new[:i]);
+			s2 = A[i, i + 1:].dot(x[i + 1:]);
+			x_new[i] = (b[i] - s1 - s2)/A[i, i];
+		if allclose(x, x_new, rtol = 1e-8):
+			break
+		x = x_new;
+	#print("Solution: {0}".format(x));
+	#error = A.dot(x) - b;
+	#print("Error: {0}".format(error));
+	return x;
+
+
 #x = syp.symbols("x");
 #f1 = 5e-9*x**4 - 1e-5*x**3 + 0.0029*x**2 - 0.1794*x - 0.4279;
 #f2 = 1e-8*x**5 - 3e-6*x**4 - 0.0197*x**2 + 0.0003*x**3 + 0.5455*x + 0.6581;

@@ -125,16 +125,17 @@ def ApplyInitialCondition(mesh, f):
 	a = f(mesh);
 	return a, (amin(a), amax(a));
 
-def f(x): return 10*exp(-1*(x - 3)**2);
+#def f(x): return 10*exp(-1*(x - 3)**2);
+def f(x): return 10*sin(pi/5*x);
 
 #%% Input data
 xi = syp.symbols("xi");								# Symbolic variable
 x0 = 0;		x1 = 10;								# Domain dimentions
 c = 5;												# Advection speed
-mu = 0.2;											# Viscosity
+mu = 0.1;											# Viscosity
 t_max = 20;											# Maximum time
 dt = 0.01;											# Time step
-N = 30;												# Number of elements = N, number of basis functions = N + 1
+N = 50;												# Number of elements = N, number of basis functions = N + 1
 DOP = 4;											# Degree of precision for integration
 w_int_std, x_int_std = Quadrature_weights(DOP, -1, 1, "cos");
 x_mesh, element_nodes, phi = GenMesh1D(x0, x1, N, xi);	# Generate mesh

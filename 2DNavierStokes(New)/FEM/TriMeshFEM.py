@@ -78,13 +78,13 @@ class TriMesh():
 		xb[:] = linspace(self.x1, self.x2, self.bnx + 1);
 		#yb[:] = linspace(self.y1, self.y2, self.bnx+1)
 		nb[:] = linspace(0., self.y2, self.bny + 1)
-		yb[:] = 1;
-		#yref = 0.1*sin(1.5*pi*2/(self.x2 - self.x1));
-		#for i in range(self.bnx + 1): 
-		#	if (xb[i] < 2):
-		#		yb[i] = 1. + 0.1*sin(1.5*pi*xb[i]/(self.x2 - self.x1));
-		#	else:
-		#		yb[i] = 1. + yref - 0.2*(xb[i] - 2.)/(self.x2 - 2.);
+		#yb[:] = 1;
+		yref = 0.1*sin(1.5*pi*2/(self.x2 - self.x1));
+		for i in range(self.bnx + 1): 
+			if (xb[i] < 2):
+				yb[i] = 1. + 0.1*sin(1.5*pi*xb[i]/(self.x2 - self.x1));
+			else:
+				yb[i] = 1. + yref - 0.2*(xb[i] - 2.)/(self.x2 - 2.);
 
 		self.vertices = [];
 		self.leftVI = [];
@@ -125,10 +125,10 @@ class TriMesh():
 			A[self.lowerVI, :] = A[self.upperVI, :];
 	
 		elif BC == "Dir":
-			A[self.leftVI, :] = 0;
-			A[self.rightVI, :] = 0;
-			A[self.lowerVI, :] = 0;
-			A[self.upperVI, :] = 0;
+			A[self.leftVI, :] = 0;		A[self.leftVI, self.leftVI] = 1.0;
+			A[self.rightVI, :] = 0;		A[self.rightVI, self.rightVI] = 1.0;
+			A[self.lowerVI, :] = 0;		A[self.lowerVI, self.lowerVI] = 1.0;
+			A[self.upperVI, :] = 0;		A[self.upperVI, self.upperVI] = 1.0;
 
 	#=========================================================
 	# Plots the mesh

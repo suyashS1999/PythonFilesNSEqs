@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 from matplotlib import animation
 from NumericalTools import*
 from TriMeshFEM import TriMesh, MeshElementFEM
-from matplotlib import animation
 from mytools import pbf
 import time
 from FEM2D import LinearAdvectionFEM_Matrix

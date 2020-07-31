@@ -55,8 +55,8 @@ def LinearAdvectionFEM_Matrix(mesh, c, mu, x_int_mesh, y_int_mesh, w_int_stdtri,
 
 def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC, BC):
 	mass_M = zeros((mesh.nVert, mesh.nVert));
-	stiff_M1_non_lin = zeros((mesh.nElem, 3, 3, 3));
-	stiff_M2_non_lin = zeros((mesh.nElem, 3, 3, 3));
+	#stiff_M1_non_lin = zeros((mesh.nElem, 3, 3, 3));
+	#stiff_M2_non_lin = zeros((mesh.nElem, 3, 3, 3));
 	stiff_M3 = zeros((mesh.nVert, mesh.nVert));
 	for element in range(mesh.nElem):
 		pbf(element, mesh.nElem, "Assembeling Matrix");
@@ -80,9 +80,9 @@ def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC
 				inty_part2 = (phi_dyphi[:, -1] - phi_dyphi[:, 0]);
 				stiff_elemMatrix3[i, j] = mu*(intx_part1.dot(w_int_stdtri)*det_J - (dphi[i][0]*dphi[j][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri)	
 											+ (inty_part2.dot(w_int_stdtri)*det_J - (dphi[i][1]*dphi[j][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri)));
-				for k in range(elem.N):
-					stiff_M1_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
-					stiff_M2_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
+				#for k in range(elem.N):
+				#	stiff_M1_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
+				#	stiff_M2_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
 
 		elem.Assemble_FEM_Matrix(mass_elemMatrix, mass_M);
 		elem.Assemble_FEM_Matrix(stiff_elemMatrix3, stiff_M3);
@@ -94,7 +94,7 @@ def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC
 	print("\nApplying Boundary Conditions ...");
 	mesh.ApplyBoundaryConditions(diffusion_M, BC);
 	print("Done");
-	return ICu, ICv, mass_M_inv, stiff_M3, diffusion_M;
+	return ICu, ICv, mass_M_inv, diffusion_M;
 
 def NonLinearStiff_Matrix(u, v, mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_stdtri, BC):
 	stiff_M1_non_lin = zeros((mesh.nVert, mesh.nVert));
@@ -114,7 +114,6 @@ def NonLinearStiff_Matrix(u, v, mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_
 				for k in range(elem.N):
 					stiff_elemMatrix1[i, j] += u[elem.vertices_idx[k]]*(phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
 					stiff_elemMatrix2[i, j] += v[elem.vertices_idx[k]]*(phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
-
 		elem.Assemble_FEM_Matrix(stiff_elemMatrix1, stiff_M1_non_lin);
 		elem.Assemble_FEM_Matrix(stiff_elemMatrix2, stiff_M2_non_lin);
 	convection_x = sparse(mass_M_inv.dot(stiff_M1_non_lin));
@@ -168,7 +167,7 @@ def WaveEquation(mesh, c2, x_int_mesh, y_int_mesh, w_int_stdtri, IC_v, IC_w, BC,
 	return IC_v, IC_w, mass_M, stiff_M, A, S.reshape(1, len(S))[0];
 
 
-#def BurgersEquationFEM_Matrix(mesh, mu):
+#def BurgersEquationFEM_Matrix_SYM(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC, BC):
 #	mass_M = zeros((mesh.nVert, mesh.nVert));
 #	stiff_M1 = zeros((mesh.nVert, mesh.nVert), dtype = object);
 #	stiff_M2 = zeros((mesh.nVert, mesh.nVert), dtype = object);
@@ -182,8 +181,8 @@ def WaveEquation(mesh, c2, x_int_mesh, y_int_mesh, w_int_stdtri, IC_v, IC_w, BC,
 #		stiff_elemMatrix2 = zeros((elem.N, elem.N), dtype = object);
 #		stiff_elemMatrix3 = zeros((elem.N, elem.N));
 #		if element == 0:
-#			ICu = elem.ApplyInitialCondition(InitialCondition);
-#			ICv = elem.ApplyInitialCondition(InitialCondition);
+#			ICu = elem.ApplyInitialCondition(IC);
+#			ICv = elem.ApplyInitialCondition(IC);
 
 #		elem.Transform_to_stdtri();
 #		J = elem.Jacobian;
@@ -207,32 +206,30 @@ def WaveEquation(mesh, c2, x_int_mesh, y_int_mesh, w_int_stdtri, IC_v, IC_w, BC,
 #		elem.Assemble_FEM_Matrix(stiff_elemMatrix2, stiff_M2);
 #		elem.Assemble_FEM_Matrix(stiff_elemMatrix3, stiff_M3);
 	
-#	print("\n Inverting Matrices ...");
-#	mass_M_inv = inv(mass_M);
+#	print("\nInverting Matrices ...");
+#	mass_M_inv = sparse(inv(mass_M));
 #	diffusion_M = mass_M_inv.dot(stiff_M3);
 #	print("Done");
-#	print("\n Applying Boundary Conditions ...");
-#	mesh.ApplyBoundaryConditions(diffusion_M);
+#	print("\nApplying Boundary Conditions ...");
+#	mesh.ApplyBoundaryConditions(diffusion_M, BC);
 #	print("Done");
-#	print("\n Final assembly of matrices ...");
+#	print("\nFinal assembly of matrices ...");
 #	convection_u_M_func = syp.lambdify([a_sym], (stiff_M1), "numpy");
 #	convection_v_M_func = syp.lambdify([a_sym], (stiff_M2), "numpy");
 #	print("Done");
-#	return ICu, ICv, (mass_M_inv), stiff_M1, stiff_M2, stiff_M3, (diffusion_M), convection_u_M_func, convection_v_M_func;
+#	return ICu, ICv, (mass_M_inv), sparse(diffusion_M), convection_u_M_func, convection_v_M_func;
 
-#a, b, mass_M_inv, _, _, _, diffusion_M, convection_u_M_func, convection_v_M_func = BurgersEquationFEM_Matrix(mesh, mu);
-#def Update_convection_M(a, b): 
+#def Update_convection_M(a, b, mesh, mass_M_inv, BC, convection_u_M_func, convection_v_M_func):
 #	#A = (mass_M_inv @ ((asarray(convection_u_M_func(a), dtype = float))));
 #	#B = (mass_M_inv @ ((asarray(convection_v_M_func(a), dtype = float))));
 #	#C = (mass_M_inv @ ((asarray(convection_u_M_func(b), dtype = float))));
 #	#D = (mass_M_inv @ ((asarray(convection_v_M_func(b), dtype = float))));
-#	A = (mass_M_inv.dot((asarray(convection_u_M_func(a), dtype = float))));
-#	B = (mass_M_inv.dot((asarray(convection_v_M_func(a), dtype = float))));
-#	C = (mass_M_inv.dot((asarray(convection_u_M_func(b), dtype = float))));
-#	D = (mass_M_inv.dot((asarray(convection_v_M_func(b), dtype = float))));
-#	mesh.ApplyBoundaryConditions(A);
-#	mesh.ApplyBoundaryConditions(B);
-#	mesh.ApplyBoundaryConditions(C);
-#	mesh.ApplyBoundaryConditions(D);
+#	A = sparse(mass_M_inv.dot((asarray(convection_u_M_func(a), dtype = float))));
+#	B = sparse(mass_M_inv.dot((asarray(convection_v_M_func(a), dtype = float))));
+#	C = sparse(mass_M_inv.dot((asarray(convection_u_M_func(b), dtype = float))));
+#	D = sparse(mass_M_inv.dot((asarray(convection_v_M_func(b), dtype = float))));
+#	mesh.ApplyBoundaryConditions(A, BC);
+#	mesh.ApplyBoundaryConditions(B, BC);
+#	mesh.ApplyBoundaryConditions(C, BC);
+#	mesh.ApplyBoundaryConditions(D, BC);
 #	return A, B, C, D;
-#X, Y = RK42D_call((dt, Update_convection_M, 0, diffusion_M, 0, 0), dt, a, b, t_max, stab_fig);

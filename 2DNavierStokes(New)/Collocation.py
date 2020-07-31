@@ -5,13 +5,6 @@ from numpy.linalg import inv, det, norm
 from basis import BasisFunctions
 import time
 
-#x0 = -1; x1 = 1;								# Domain dimentions
-#y0 = -1; y1 = 1;
-#n = 40;											# Domain division
-#x = linspace(x0, x1, n);
-#y = linspace(y0, y1, n);
-#x_mesh, y_mesh = meshgrid(x, y);
-
 def RBF(r, bool):
 	""" Function to define Radial Basis Function
 	Input Arguments:
@@ -91,13 +84,21 @@ def Inter(a, x, y, nodes, bool):
 	#print("That took: ", time.time() - ts);
 	return fi.T;
 
+
+#x0 = -1; x1 = 1;								# Domain dimentions
+#y0 = -1; y1 = 1;
+#n = 40;											# Domain division
+#x = linspace(x0, x1, n);
+#y = linspace(y0, y1, n);
+#x_mesh, y_mesh = meshgrid(x, y);
+
 #def f(x, y): return cos(2*pi*x)*cos(2*pi*y);
 #S = f(x_mesh, y_mesh);
 ##S = -2*ones((1, n**2))[0];
 #nodes = array([x_mesh.reshape(1, -1)[0], y_mesh.reshape(1, -1)[0]]).T;
 
 #A = RBF_Matrix(nodes, ["2diff"]);
-#A, S = Boundary_Conditions(A, S.reshape(1, -1)[0], nodes, [x0, x1, y0, y1], "neumm", 0);
+#A, S, _ = Boundary_Conditions(A, S.reshape(1, -1)[0], nodes, [x0, x1, y0, y1], "neumm", 0);
 #plt.imshow(A);
 #plt.colorbar();
 #p = inv(A).dot(S.reshape(1, -1)[0]);

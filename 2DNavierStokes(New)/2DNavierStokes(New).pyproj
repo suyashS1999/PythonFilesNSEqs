@@ -45,6 +45,9 @@
     <Compile Include="FEM\WaveEq.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="LinAdvMeshless.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="mytools.py" />
     <Compile Include="NavierStokesMatrix.py">
       <SubType>Code</SubType>

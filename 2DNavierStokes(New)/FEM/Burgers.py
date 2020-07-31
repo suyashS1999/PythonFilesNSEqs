@@ -14,7 +14,7 @@ def InitialCondition(x, y): return 40*exp(-100*((x - 0.8)**2 + (y - 0.8)**2));
 #%% Input data
 x1 = 0.;		x2 = 2.;												# Domain dimentions
 y1 = 0.;		y2 = 2.;
-mu = 0.6;																# Viscosity
+mu = 0.8;																# Viscosity
 t_max = 0.05;															# Maximum time
 dt = 0.001;																# Time step
 DOP = 4;																# Degree of precision for integration
@@ -32,7 +32,7 @@ BC = "Periodic";
 
 
 #%% Generate Matrix Burgers Equation
-a, b, mass_M_inv, _, diffusion_M = BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, BC);
+a, b, mass_M_inv, diffusion_M = BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, BC);
 stab_fig = plt.figure(figsize = (8, 8));
 X, Y = EulerExplicit2D_nonLin(NonLinearStiff_Matrix, (mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_stdtri, BC), diffusion_M, dt, a, b, t_max, stab_fig);
 plt.show();

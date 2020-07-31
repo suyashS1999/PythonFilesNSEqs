@@ -10,7 +10,8 @@ from FEM2D import LinearAdvectionFEM_Matrix
 from scipy.sparse import csr_matrix as sparse
 
 #%% Functions
-def InitialCondition(x, y): return 40*exp(-100*((x - 0.8)**2 + (y - 0.8)**2));
+#def InitialCondition(x, y): return 40*exp(-100*((x - 0.8)**2 + (y - 0.8)**2));
+def InitialCondition(x, y): return sin(x*y);
 
 def Verif_f(x, y): return sin(0.5*pi*x)*cos(0.5*pi*(y - 1));
 

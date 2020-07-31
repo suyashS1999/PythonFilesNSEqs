@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix as sparse
 def InitialCondition(x, y): return 40*exp(-100*((x - 2)**2 + (y - 2)**2));
 
 #%% Input data
-x1 = 0.;		x2 = 10.;												# Domain dimentions
+x1 = 0.;		x2 = 4.;												# Domain dimentions
 y1 = 0.;		y2 = 4.;
 c = 5;																	# Wave Speed
 t_max = 10;																# Maximum time
@@ -26,7 +26,7 @@ x_int_mesh, y_int_mesh = meshgrid(x_int_stdtri, x_int_stdtri);
 quadrature_parm = (w_int_stdtri, x_int_stdtri, w_int_stdtri, x_int_stdtri);
 
 mesh = TriMesh(x1, x2, y1, y2);
-mesh.loadMesh(8, 0, 0, 0);
+mesh.loadMesh(10, 0, 0, 0);
 mesh.plotMesh();
 
 #%%

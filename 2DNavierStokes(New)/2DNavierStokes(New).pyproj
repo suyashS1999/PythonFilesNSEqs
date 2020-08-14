@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>64257bb2-1b0e-4ba1-bbab-21b50a69e74a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>FEM\FEM2D.py</StartupFile>
+    <StartupFile>FEM\Burgers.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

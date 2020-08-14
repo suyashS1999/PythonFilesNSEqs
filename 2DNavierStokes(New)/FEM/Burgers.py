@@ -9,14 +9,14 @@ import time
 from FEM2D import BurgersEquationFEM_Matrix, NonLinearStiff_Matrix
 
 #%% Functions
-def InitialCondition(x, y): return 40*exp(-100*((x - 0.8)**2 + (y - 0.8)**2));
+def InitialCondition(x, y): return 40*exp(-100*((x - 0.5)**2 + (y - 0.5)**2));
 
 #%% Input data
-x1 = 0.;		x2 = 2.;												# Domain dimentions
-y1 = 0.;		y2 = 2.;
-mu = 0.8;																# Viscosity
-t_max = 0.05;															# Maximum time
-dt = 0.001;																# Time step
+x1 = 0.;		x2 = 1.;												# Domain dimentions
+y1 = 0.;		y2 = 1.;
+mu = 0.9;																# Viscosity
+t_max = 0.5;																# Maximum time
+dt = 0.0001;																# Time step
 DOP = 4;																# Degree of precision for integration
 w_int_stdtri, x_int_stdtri = Quadrature_weights(DOP, 0, 1, "lin");		# Quadrature weights and nodes for intgration
 w_fact = 0.5;															# Area ratio between square and triangle
@@ -32,15 +32,15 @@ BC = "Periodic";
 
 
 #%% Generate Matrix Burgers Equation
-a, b, mass_M_inv, diffusion_M = BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, BC);
+a, b, mass_M_inv, diffusion_M, stiff_M1_non_lin, stiff_M2_non_lin, map2glob, sum_lst = BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, InitialCondition, BC);
 stab_fig = plt.figure(figsize = (8, 8));
-X, Y = EulerExplicit2D_nonLin(NonLinearStiff_Matrix, (mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_stdtri, BC), diffusion_M, dt, a, b, t_max, stab_fig);
+X, Y = EulerExplicit2D_nonLin(NonLinearStiff_Matrix, (mass_M_inv, stiff_M1_non_lin, stiff_M2_non_lin, map2glob, sum_lst, mesh, BC), diffusion_M, dt, a, b, t_max, stab_fig);
 plt.show();
 
 #%% Solution Plots
 fig = plt.figure(figsize = (18, 8));
 mesh.plotSoln(sqrt(a**2 + b**2), fig, "Solution");
-k = 1;
+k = 2;
 def updatefig(i):
 	global k;
 	mesh.plotSoln(sqrt(X[:, k]**2 + Y[:, k]**2), fig, "Solution");

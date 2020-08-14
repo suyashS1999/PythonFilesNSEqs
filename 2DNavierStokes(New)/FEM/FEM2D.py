@@ -55,9 +55,10 @@ def LinearAdvectionFEM_Matrix(mesh, c, mu, x_int_mesh, y_int_mesh, w_int_stdtri,
 
 def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC, BC):
 	mass_M = zeros((mesh.nVert, mesh.nVert));
-	#stiff_M1_non_lin = zeros((mesh.nElem, 3, 3, 3));
-	#stiff_M2_non_lin = zeros((mesh.nElem, 3, 3, 3));
+	stiff_M1_non_lin = zeros((mesh.nElem, 3, 3, 3));
+	stiff_M2_non_lin = zeros((mesh.nElem, 3, 3, 3));
 	stiff_M3 = zeros((mesh.nVert, mesh.nVert));
+	map2glob = zeros((mesh.nElem, 3), dtype = int);
 	for element in range(mesh.nElem):
 		pbf(element, mesh.nElem, "Assembeling Matrix");
 		elem = MeshElementFEM(mesh, element);
@@ -80,13 +81,16 @@ def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC
 				inty_part2 = (phi_dyphi[:, -1] - phi_dyphi[:, 0]);
 				stiff_elemMatrix3[i, j] = mu*(intx_part1.dot(w_int_stdtri)*det_J - (dphi[i][0]*dphi[j][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri)	
 											+ (inty_part2.dot(w_int_stdtri)*det_J - (dphi[i][1]*dphi[j][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri)));
-				#for k in range(elem.N):
-				#	stiff_M1_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
-				#	stiff_M2_non_lin[element, k] = (phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
+				for k in range(elem.N):
+					stiff_M1_non_lin[element, k, i, j] = (phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
+					stiff_M2_non_lin[element, k, i, j] = (phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
 
+		map2glob[element, :] = array([elem.vertices_idx[0], elem.vertices_idx[1], elem.vertices_idx[2]]);
 		elem.Assemble_FEM_Matrix(mass_elemMatrix, mass_M);
 		elem.Assemble_FEM_Matrix(stiff_elemMatrix3, stiff_M3);
 
+	map2glob = map2glob.reshape(mesh.nElem, 3, 1);
+	sum_lst = Glob_Map(map2glob);
 	print("\nInverting Matrices ...");
 	mass_M_inv = sparse(inv(mass_M));
 	diffusion_M = sparse(mass_M_inv.dot(stiff_M3));
@@ -94,33 +98,74 @@ def BurgersEquationFEM_Matrix(mesh, mu, x_int_mesh, y_int_mesh, w_int_stdtri, IC
 	print("\nApplying Boundary Conditions ...");
 	mesh.ApplyBoundaryConditions(diffusion_M, BC);
 	print("Done");
-	return ICu, ICv, mass_M_inv, diffusion_M;
+	return ICu, ICv, mass_M_inv, diffusion_M, stiff_M1_non_lin, stiff_M2_non_lin, map2glob, sum_lst;
 
-def NonLinearStiff_Matrix(u, v, mesh, mass_M_inv, x_int_mesh, y_int_mesh, w_int_stdtri, BC):
-	stiff_M1_non_lin = zeros((mesh.nVert, mesh.nVert));
-	stiff_M2_non_lin = zeros((mesh.nVert, mesh.nVert));
+def Glob_Map(map2glob):
+	sp = shape(map2glob);
+	map = map2glob.reshape(sp[0]*sp[1]);
+	glob_idx = arange(0, amax(map) + 1, 1);
+	sum_lst = [];
+	for i in glob_idx:
+		sum_lst.append(where(map == i)[0].tolist());
+	return sum_lst;
 
-	for element in range(mesh.nElem):
-		elem = MeshElementFEM(mesh, element);
-		stiff_elemMatrix1 = zeros((elem.N, elem.N));
-		stiff_elemMatrix2 = zeros((elem.N, elem.N));
-		elem.Transform_to_stdtri();
-		J = elem.Jacobian;
-		j_c = elem.Jacobian_c;
-		det_J = det(J);
-		phi, dphi = elem.ShapeFunctions(J[0][0]*x_int_mesh + J[0][1]*y_int_mesh + j_c[0], J[1][0]*x_int_mesh + J[1][1]*y_int_mesh + j_c[1]);
-		for i in range(elem.N):
-			for j in range(elem.N):
-				for k in range(elem.N):
-					stiff_elemMatrix1[i, j] += u[elem.vertices_idx[k]]*(phi[i]*phi[j]*dphi[k][0]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
-					stiff_elemMatrix2[i, j] += v[elem.vertices_idx[k]]*(phi[i]*phi[j]*dphi[k][1]*det_J).dot(w_int_stdtri).dot(w_int_stdtri);
-		elem.Assemble_FEM_Matrix(stiff_elemMatrix1, stiff_M1_non_lin);
-		elem.Assemble_FEM_Matrix(stiff_elemMatrix2, stiff_M2_non_lin);
-	convection_x = sparse(mass_M_inv.dot(stiff_M1_non_lin));
-	convection_y = sparse(mass_M_inv.dot(stiff_M2_non_lin));
-	mesh.ApplyBoundaryConditions(convection_x, BC);
-	mesh.ApplyBoundaryConditions(convection_y, BC);
-	return convection_x, convection_y, convection_x, convection_y;
+
+def NonLinearStiff_Matrix(u, v, mass_M_inv, stiff_M1_non_lin, stiff_M2_non_lin, map2glob, sum_lst, mesh, BC):
+	u_hat = u[map2glob];
+	v_hat = v[map2glob];
+	#print(amax(u_hat), amin(u_hat));
+	shp = shape(u_hat);
+	U1 = zeros((shp[0], shp[1], shp[1], shp[2]));
+	U1[:, 0] = u_hat*repeat(u_hat[:, 0], 3).reshape(shape(u_hat));
+	U1[:, 1] = u_hat*repeat(u_hat[:, 1], 3).reshape(shape(u_hat));
+	U1[:, 2] = u_hat*repeat(u_hat[:, 2], 3).reshape(shape(u_hat));
+
+	V1 = zeros(shape(U1));
+	V1[:, 0] = v_hat*repeat(u_hat[:, 0], 3).reshape(shape(u_hat));
+	V1[:, 1] = v_hat*repeat(u_hat[:, 1], 3).reshape(shape(u_hat));
+	V1[:, 2] = v_hat*repeat(u_hat[:, 2], 3).reshape(shape(u_hat));
+
+	U2 = zeros(shape(U1));
+	U2[:, 0] = u_hat*repeat(v_hat[:, 0], 3).reshape(shape(u_hat));
+	U2[:, 1] = u_hat*repeat(v_hat[:, 1], 3).reshape(shape(u_hat));
+	U2[:, 2] = u_hat*repeat(v_hat[:, 2], 3).reshape(shape(u_hat));
+
+	V2 = zeros(shape(U1));
+	V2[:, 0] = v_hat*repeat(v_hat[:, 0], 3).reshape(shape(u_hat));
+	V2[:, 1] = v_hat*repeat(v_hat[:, 1], 3).reshape(shape(u_hat));
+	V2[:, 2] = v_hat*repeat(v_hat[:, 2], 3).reshape(shape(u_hat));
+	
+
+	A = matmul(stiff_M1_non_lin, U1);
+	A = sum(A, axis = 1);
+	B = matmul(stiff_M2_non_lin, V1);
+	B = sum(B, axis = 1);
+	C = matmul(stiff_M1_non_lin, U2);
+	C = sum(C, axis = 1);
+	D = matmul(stiff_M2_non_lin, V2);
+	D = sum(D, axis = 1);
+
+	convection_ux = AssembleFEM_nonLinVect(A, sum_lst);
+	convection_uy = AssembleFEM_nonLinVect(B, sum_lst);
+	convection_vx = AssembleFEM_nonLinVect(C, sum_lst);
+	convection_vy = AssembleFEM_nonLinVect(D, sum_lst);
+
+	convection_ux = mass_M_inv.dot(convection_ux);
+	convection_uy = mass_M_inv.dot(convection_uy);
+	convection_vx = mass_M_inv.dot(convection_vx);
+	convection_vy = mass_M_inv.dot(convection_vy);
+
+	mesh.ApplyBoundaryConditionsVect(convection_ux, BC);
+	mesh.ApplyBoundaryConditionsVect(convection_uy, BC);
+	mesh.ApplyBoundaryConditionsVect(convection_vx, BC);
+	mesh.ApplyBoundaryConditionsVect(convection_vy, BC);
+
+	return convection_ux, convection_uy, convection_vx, convection_vy;
+
+def AssembleFEM_nonLinVect(elemVect, sum_lst):
+	vect = elemVect.reshape(shape(elemVect)[0]*shape(elemVect)[1]);
+	globVect = asarray([sum(vect[i] for i in indices) for indices in sum_lst]);
+	return globVect;
 
 def WaveEquation(mesh, c2, x_int_mesh, y_int_mesh, w_int_stdtri, IC_v, IC_w, BC, Verif_Source):
 	mass_M = zeros((mesh.nVert, mesh.nVert));

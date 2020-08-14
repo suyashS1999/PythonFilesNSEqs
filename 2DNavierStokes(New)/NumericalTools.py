@@ -171,15 +171,17 @@ def EulerExplicit2D_nonLin(Update_func, Func_args, Constant_M, dt, x0, y0, t_max
 	for t in range(no_t_steps - 1):
 		pbf(t, no_t_steps - 2, "Time Marching");
 		A_non, B_non, C_non, D_non = Update_func(X[:, t], Y[:, t], *Func_args);
-		Au = -A_non + Constant_M;
+		Au = -A_non;
 		Bu = -B_non;
 		Av = -C_non;
-		Bv = -D_non + Constant_M;
-		X[:, t + 1] = X[:, t] + dt*(Au.dot(X[:, t]) + Bu.dot(Y[:, t]));
-		Y[:, t + 1] = Y[:, t] + dt*(Av.dot(X[:, t]) + Bv.dot(Y[:, t]));
-		if t == 0 or t == no_t_steps - 2:
-			A = vstack((concatenate((sparse.todense(Au), sparse.todense(Bu)), axis = 1), concatenate((sparse.todense(Av), sparse.todense(Bv)), axis = 1)));
-			plot_stability_region(s, A, dt, fig);
+		Bv = -D_non;
+		#X[:, t + 1] = X[:, t] + dt*(Au.dot(X[:, t]) + Bu.dot(Y[:, t]));
+		#Y[:, t + 1] = Y[:, t] + dt*(Av.dot(X[:, t]) + Bv.dot(Y[:, t]));
+		X[:, t + 1] = X[:, t] + dt*(Au + Bu + Constant_M.dot(X[:, t]));
+		Y[:, t + 1] = Y[:, t] + dt*(Av + Bv + Constant_M.dot(Y[:, t]));
+		#if t == 0 or t == no_t_steps - 2:
+		#	A = vstack((concatenate((sparse.todense(Au), sparse.todense(Bu)), axis = 1), concatenate((sparse.todense(Av), sparse.todense(Bv)), axis = 1)));
+		#	plot_stability_region(s, A, dt, fig);
 	return X, Y;
 
 def EulerImplicit(A, dt, x0, t_max, S_t, Manifactured_Soln):

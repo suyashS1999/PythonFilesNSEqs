@@ -130,6 +130,12 @@ class TriMesh():
 			A[self.lowerVI, :] = 0;		A[self.lowerVI, self.lowerVI] = 1.0;
 			A[self.upperVI, :] = 0;		A[self.upperVI, self.upperVI] = 1.0;
 
+	def ApplyBoundaryConditionsVect(self, A, BC):
+			if BC == "Periodic":
+				A[self.leftVI] = A[self.rightVI];
+				A[self.lowerVI] = A[self.upperVI];
+	
+
 	#=========================================================
 	# Plots the mesh
 	#=========================================================

@@ -15,7 +15,7 @@ def InitialCondition(x, y): return 40*exp(-100*((x - 0.5)**2 + (y - 0.5)**2));
 x1 = 0.;		x2 = 1.;												# Domain dimentions
 y1 = 0.;		y2 = 1.;
 mu = 0.9;																# Viscosity
-t_max = 0.5;																# Maximum time
+t_max = 0.3;																# Maximum time
 dt = 0.0001;																# Time step
 DOP = 4;																# Degree of precision for integration
 w_int_stdtri, x_int_stdtri = Quadrature_weights(DOP, 0, 1, "lin");		# Quadrature weights and nodes for intgration

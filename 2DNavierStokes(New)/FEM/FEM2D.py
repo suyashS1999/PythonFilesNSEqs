@@ -164,7 +164,8 @@ def NonLinearStiff_Matrix(u, v, mass_M_inv, stiff_M1_non_lin, stiff_M2_non_lin, 
 
 def AssembleFEM_nonLinVect(elemVect, sum_lst):
 	vect = elemVect.reshape(shape(elemVect)[0]*shape(elemVect)[1]);
-	globVect = asarray([sum(vect[i] for i in indices) for indices in sum_lst]);
+	#globVect = asarray([sum(vect[i] for i in indices) for indices in sum_lst]);
+	globVect = asarray([sum(vect[i]) for i in sum_lst]);
 	return globVect;
 
 def WaveEquation(mesh, c2, x_int_mesh, y_int_mesh, w_int_stdtri, IC_v, IC_w, BC, Verif_Source):
